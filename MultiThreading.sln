@@ -1,0 +1,40 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.21005.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MultiThreadingEx7", "MultiThreading\MultiThreading.vcxproj", "{3065C7EE-7F0F-46C5-9842-D892BF555180}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MultiThreadingEx8", "MultiThreadingEx8\MultiThreadingEx8.vcxproj", "{5319C17E-0073-4332-A517-DEC1BCF4EF82}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MultiThreadingEx9", "MultiThreadingEx9\MultiThreadingEx9.vcxproj", "{7CDB9C6D-8B48-4A7D-A8D3-BB171AC8B4CF}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MultiThreadingEx10", "MultiThreadingEx10\MultiThreadingEx10.vcxproj", "{D851C87F-8D3D-434E-AD27-5F82722AE16E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{3065C7EE-7F0F-46C5-9842-D892BF555180}.Debug|Win32.ActiveCfg = Debug|Win32
+		{3065C7EE-7F0F-46C5-9842-D892BF555180}.Debug|Win32.Build.0 = Debug|Win32
+		{3065C7EE-7F0F-46C5-9842-D892BF555180}.Release|Win32.ActiveCfg = Release|Win32
+		{3065C7EE-7F0F-46C5-9842-D892BF555180}.Release|Win32.Build.0 = Release|Win32
+		{5319C17E-0073-4332-A517-DEC1BCF4EF82}.Debug|Win32.ActiveCfg = Debug|Win32
+		{5319C17E-0073-4332-A517-DEC1BCF4EF82}.Debug|Win32.Build.0 = Debug|Win32
+		{5319C17E-0073-4332-A517-DEC1BCF4EF82}.Release|Win32.ActiveCfg = Release|Win32
+		{5319C17E-0073-4332-A517-DEC1BCF4EF82}.Release|Win32.Build.0 = Release|Win32
+		{7CDB9C6D-8B48-4A7D-A8D3-BB171AC8B4CF}.Debug|Win32.ActiveCfg = Debug|Win32
+		{7CDB9C6D-8B48-4A7D-A8D3-BB171AC8B4CF}.Debug|Win32.Build.0 = Debug|Win32
+		{7CDB9C6D-8B48-4A7D-A8D3-BB171AC8B4CF}.Release|Win32.ActiveCfg = Release|Win32
+		{7CDB9C6D-8B48-4A7D-A8D3-BB171AC8B4CF}.Release|Win32.Build.0 = Release|Win32
+		{D851C87F-8D3D-434E-AD27-5F82722AE16E}.Debug|Win32.ActiveCfg = Debug|Win32
+		{D851C87F-8D3D-434E-AD27-5F82722AE16E}.Debug|Win32.Build.0 = Debug|Win32
+		{D851C87F-8D3D-434E-AD27-5F82722AE16E}.Release|Win32.ActiveCfg = Release|Win32
+		{D851C87F-8D3D-434E-AD27-5F82722AE16E}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
