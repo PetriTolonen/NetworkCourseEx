@@ -29,9 +29,8 @@ struct outmessage
 std::mutex list_usage_mutex;
 std::list<outmessage> MyList;
 std::atomic<bool> exiting = false;
-SOCKET s;
 
-void messageSender()
+void messageSender(SOCKET s)
 {
 	char sbuf[BUFLEN];
 	outmessage sendtemp;
@@ -39,19 +38,20 @@ void messageSender()
 	{
 		if (!MyList.empty())
 		{
-			std::this_thread::sleep_for(std::chrono::milliseconds(10001));
+			std::this_thread::sleep_for(std::chrono::seconds(10));
 			list_usage_mutex.lock();
 			sendtemp = MyList.back();
 			MyList.pop_back();
 			list_usage_mutex.unlock();
-			
-			sendtemp.message = sendtemp.message + " " + sendtemp.sender + " " + sendtemp.timestamp;
+
+			sendtemp.message += " " + sendtemp.sender + " " + sendtemp.timestamp;
 
 			int index = 0;
 			for (int i = 0; i < sendtemp.message.length(); i++)
 			{
 				sbuf[index++] = sendtemp.message[i];
 			}
+			sbuf[index++] = { '\0' };
 
 			if (sendto(s, sbuf, index, 0, (struct sockaddr*) &sendtemp.si_other, sendtemp.slen) == SOCKET_ERROR)
 			{
@@ -69,6 +69,7 @@ int main()
 	int slen, recv_len;
 	char buf[BUFLEN];
 	WSADATA wsa;
+	SOCKET s;
 
 	slen = sizeof(si_other);
 
@@ -93,7 +94,7 @@ int main()
 		exit(EXIT_FAILURE);
 	}
 
-	std::thread* myMessagerThread = new std::thread(messageSender);
+	std::thread* myMessagerThread = new std::thread(messageSender, s);
 
 	while (1)
 	{
@@ -111,13 +112,14 @@ int main()
 
 		outmessage temp;
 		temp.message.resize(recv_len);
-		memcpy(&temp.message[0], &buf[0], recv_len);		
+		memcpy(&temp.message[0], &buf[0], recv_len );	
+		temp.message.pop_back();
 		temp.si_other = si_other;
 		temp.slen = slen;
 		time_t t = time(0);
 		struct tm * now = localtime(&t);
-		temp.timestamp = "| " + std::to_string(now->tm_hour) + " - " + std::to_string(now->tm_min) + " |";
-		temp.sender = std::to_string(si_other.sin_addr.S_un.S_addr);
+		temp.timestamp = "| " + std::to_string(now->tm_hour) + ":" + std::to_string(now->tm_min) + ":" + std::to_string(now->tm_sec) + " |";
+		temp.sender = inet_ntoa(si_other.sin_addr);
 
 		MyList.push_front(temp);
 	}
