@@ -21,6 +21,9 @@
 std::list<std::string> msgbuf;
 std::mutex msgbuf_mtx;
 
+struct sockaddr_in si_other, si_this;
+int s, slen = sizeof(si_other);
+
 
 void ReceiveThread(int s) {
 	struct sockaddr_in si_other;
@@ -39,11 +42,24 @@ void ReceiveThread(int s) {
 	}
 }
 
-int main(void) {
-	struct sockaddr_in si_other, si_this;
-	int s, slen = sizeof(si_other);
+void SendThread()
+{
 	char buf[BUFLEN];
 	char message[BUFLEN];
+
+	while (1)
+	{
+		printf("Enter message : ");
+		gets(message);
+
+		if (sendto(s, message, strlen(message) + 1, 0, (struct sockaddr *) &si_other, slen) == SOCKET_ERROR) {
+			printf("sendto() failed with error code : %d", WSAGetLastError());
+			exit(EXIT_FAILURE);
+		}
+	}	
+}
+
+int main(void) {
 	WSADATA wsa;
 
 	//Initialise winsock
@@ -79,16 +95,10 @@ int main(void) {
 	}
 
 	std::thread recthr(ReceiveThread, s);
-
+	std::thread sendthr(SendThread);
 	//start communication
 	while (1) {
-		printf("Enter message : ");
-		gets(message);
-
-		if (sendto(s, message, strlen(message) + 1, 0, (struct sockaddr *) &si_other, slen) == SOCKET_ERROR) {
-			printf("sendto() failed with error code : %d", WSAGetLastError());
-			exit(EXIT_FAILURE);
-		}
+		
 
 		Sleep(100);
 		msgbuf_mtx.lock();
