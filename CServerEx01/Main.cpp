@@ -31,6 +31,7 @@ std::mutex list_usage_mutex;
 std::list<outmessage> MyList;
 std::atomic<bool> exiting = false;
 int sleepCountR = 0;
+bool startcounting = false;
 std::mutex sleepCount_mutex;
 
 void messageSender(SOCKET s)
@@ -69,12 +70,22 @@ void messageSender(SOCKET s)
 
 void countDownFrom10()
 {
-	std::this_thread::sleep_for(std::chrono::seconds(1));
-	if (sleepCountR > 0)
+	while (!exiting)
 	{
-		sleepCount_mutex.lock();
-		sleepCountR--;
-		sleepCount_mutex.unlock();
+		std::this_thread::sleep_for(std::chrono::seconds(1));
+
+		if (sleepCountR > 0 && startcounting)
+		{
+			sleepCount_mutex.lock();
+			sleepCountR--;
+			sleepCount_mutex.unlock();
+			printf("%d\n", sleepCountR);
+		}
+		else if (sleepCountR == 0)
+		{
+			sleepCountR = 10;
+			startcounting = false;
+		}
 	}
 }
 
@@ -110,8 +121,8 @@ int main()
 	}
 
 	std::thread* myMessagerThread = new std::thread(messageSender, s);
-	std::thread* countDown10 = new std::thread(countDown10);
-
+	std::thread* countDown10Thread = new std::thread(countDownFrom10);
+	sleepCountR = 10;
 	while (1)
 	{
 		printf("Waiting for data..."); fflush(stdout);
@@ -128,7 +139,7 @@ int main()
 
 		outmessage temp;
 		temp.message.resize(recv_len);
-		memcpy(&temp.message[0], &buf[0], recv_len );	
+		memcpy(&temp.message[0], &buf[0], recv_len);
 		temp.message.pop_back();
 		temp.si_other = si_other;
 		temp.slen = slen;
@@ -148,7 +159,7 @@ int main()
 		}
 		sleepCount_mutex.unlock();
 
-		list_usage_mutex.lock();	
+		list_usage_mutex.lock();
 		MyList.push_front(temp);
 		list_usage_mutex.unlock();
 	}
