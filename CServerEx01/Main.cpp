@@ -24,11 +24,14 @@ struct outmessage
 	std::string timestamp;
 	struct sockaddr_in si_other;
 	int slen;
+	int mySleep;
 };
 
 std::mutex list_usage_mutex;
 std::list<outmessage> MyList;
 std::atomic<bool> exiting = false;
+int sleepCountR = 0;
+std::mutex sleepCount_mutex;
 
 void messageSender(SOCKET s)
 {
@@ -38,11 +41,12 @@ void messageSender(SOCKET s)
 	{
 		if (!MyList.empty())
 		{
-			std::this_thread::sleep_for(std::chrono::seconds(10));
 			list_usage_mutex.lock();
 			sendtemp = MyList.back();
 			MyList.pop_back();
 			list_usage_mutex.unlock();
+
+			std::this_thread::sleep_for(std::chrono::seconds(sendtemp.mySleep));
 
 			sendtemp.message += " " + sendtemp.sender + " " + sendtemp.timestamp;
 
@@ -51,7 +55,7 @@ void messageSender(SOCKET s)
 			{
 				sbuf[index++] = sendtemp.message[i];
 			}
-			sbuf[index++] = { '\0' };
+			sbuf[index++] = 0;
 
 			if (sendto(s, sbuf, index, 0, (struct sockaddr*) &sendtemp.si_other, sendtemp.slen) == SOCKET_ERROR)
 			{
@@ -61,6 +65,17 @@ void messageSender(SOCKET s)
 		}
 	}
 
+}
+
+void countDownFrom10()
+{
+	std::this_thread::sleep_for(std::chrono::seconds(1));
+	if (sleepCountR > 0)
+	{
+		sleepCount_mutex.lock();
+		sleepCountR--;
+		sleepCount_mutex.unlock();
+	}
 }
 
 int main()
@@ -95,6 +110,7 @@ int main()
 	}
 
 	std::thread* myMessagerThread = new std::thread(messageSender, s);
+	std::thread* countDown10 = new std::thread(countDown10);
 
 	while (1)
 	{
@@ -121,7 +137,20 @@ int main()
 		temp.timestamp = "| " + std::to_string(now->tm_hour) + ":" + std::to_string(now->tm_min) + ":" + std::to_string(now->tm_sec) + " |";
 		temp.sender = inet_ntoa(si_other.sin_addr);
 
+		sleepCount_mutex.lock();
+		if (sleepCountR == 0)
+		{
+			temp.mySleep = 10;
+		}
+		else
+		{
+			temp.mySleep = 10 - (10 - sleepCountR);
+		}
+		sleepCount_mutex.unlock();
+
+		list_usage_mutex.lock();	
 		MyList.push_front(temp);
+		list_usage_mutex.unlock();
 	}
 
 	myMessagerThread->join();
