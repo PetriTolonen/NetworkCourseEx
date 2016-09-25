@@ -98,8 +98,6 @@ int main(void) {
 	std::thread sendthr(SendThread);
 	//start communication
 	while (1) {
-		
-
 		Sleep(100);
 		msgbuf_mtx.lock();
 		while (!msgbuf.empty()) {

@@ -40,6 +40,8 @@ void messageSender(SOCKET s)
 	outmessage sendtemp;
 	while (!exiting)
 	{
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
 		if (!MyList.empty())
 		{
 			list_usage_mutex.lock();
@@ -47,7 +49,7 @@ void messageSender(SOCKET s)
 			MyList.pop_back();
 			list_usage_mutex.unlock();
 
-			std::this_thread::sleep_for(std::chrono::seconds(sendtemp.mySleep));
+			std::this_thread::sleep_for(std::chrono::milliseconds(sendtemp.mySleep));
 
 			time_t t = time(0);
 			struct tm * now = localtime(&t);
@@ -74,22 +76,21 @@ void messageSender(SOCKET s)
 
 void countDownFrom10()
 {
-	sleepCountR = 10;
+	sleepCountR = 10000;
 	while (!exiting)
 	{
-		std::this_thread::sleep_for(std::chrono::seconds(1));
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-		if (sleepCountR == 1)
+		if (sleepCountR <= 100)
 		{
-			sleepCountR = 10;
+			sleepCountR = 10000;
 			startcounting = false;
 		}
 		else if (startcounting)
 		{
 			sleepCount_mutex.lock();
-			sleepCountR--;
+			sleepCountR -= 100;
 			sleepCount_mutex.unlock();
-			printf("%d\n", sleepCountR);
 		}		
 	}
 }
@@ -130,9 +131,11 @@ int main()
 
 	int lastSleepCount = 0;
 	int tempTimeCalc = 0;
-	
+	outmessage temp;
+
 	while (1)
 	{
+		Sleep(100);
 		printf("Waiting for data..."); fflush(stdout);
 
 		memset(buf, '\0', BUFLEN);
@@ -141,45 +144,61 @@ int main()
 			printf("recvfrom() failed with error code : %d", WSAGetLastError());
 			exit(EXIT_FAILURE);
 		}
-
-		printf("Received packet from %s:%d\n", inet_ntoa(si_other.sin_addr), ntohs(si_other.sin_port));
-		printf("Data: %s\n", buf);
-
-		outmessage temp;
-		temp.message.resize(recv_len);
-		memcpy(&temp.message[0], &buf[0], recv_len);
-		temp.message.pop_back();
-		temp.si_other = si_other;
-		temp.slen = slen;
+		
+		// Get current time
 		time_t t = time(0);
 		struct tm * now = localtime(&t);
-		temp.timestamp = "| " + std::to_string(now->tm_hour) + ":" + std::to_string(now->tm_min) + ":" + std::to_string(now->tm_sec) + " |";
-		temp.sender = inet_ntoa(si_other.sin_addr);
 
-		if (sleepCountR == 10)
+		// Calculate send delay between messages		
+		if (sleepCountR == 10000 && !startcounting)
 		{
-			temp.mySleep = 10;
+			temp.mySleep = 10000;
 			tempTimeCalc = 0;
+			lastSleepCount = 0;
 			startcounting = true;
 		}
 		else
 		{
 			sleepCount_mutex.lock();
-			tempTimeCalc = 10 - (sleepCountR + lastSleepCount);
+			tempTimeCalc = 10000 - sleepCountR - lastSleepCount;
 			sleepCount_mutex.unlock();
-			if (tempTimeCalc < 0)
+			if (tempTimeCalc < 100)
 			{
 				tempTimeCalc = 0;
 			}
-			
+
+			// For next delay calculation...
+			lastSleepCount += tempTimeCalc;
+
+			// Save delay to temp
 			temp.mySleep = tempTimeCalc;
 		}
 
+		// Print message
+		printf("Received packet from %s:%d\n", inet_ntoa(si_other.sin_addr), ntohs(si_other.sin_port));
+		printf("Data: %s\n", buf);
+		printf("Send-delay %d\n", tempTimeCalc);
+
+		// Save message to temp
+		if (recv_len == 0)
+		{
+			recv_len++;
+			buf[0] = ' ';
+		}
+		temp.message.resize(recv_len);
+		memcpy(&temp.message[0], &buf[0], recv_len);
+		temp.message.pop_back();
+		temp.si_other = si_other;
+		temp.slen = slen;
+		
+		// Save timestamp and address to temp
+		temp.timestamp = "| " + std::to_string(now->tm_hour) + ":" + std::to_string(now->tm_min) + ":" + std::to_string(now->tm_sec) + " |";
+		temp.sender = inet_ntoa(si_other.sin_addr);
+
+		// Save temp to message line
 		list_usage_mutex.lock();
 		MyList.push_front(temp);
 		list_usage_mutex.unlock();
-
-		lastSleepCount = tempTimeCalc;
 	}
 
 	myMessagerThread->join();
