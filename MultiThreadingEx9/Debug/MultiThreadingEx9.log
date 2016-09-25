@@ -1,9 +1,6 @@
-﻿Build started 12.9.2016 12:40:06.
-     1>Project "C:\Users\PetriTol\Desktop\NetworkCourseEx\MultiThreadingEx9\MultiThreadingEx9.vcxproj" on node 2 (Build target(s)).
-     1>Link:
-         MultiThreadingEx9.vcxproj -> C:\Users\PetriTol\Desktop\NetworkCourseEx\Debug\MultiThreadingEx9.exe
-     1>Done Building Project "C:\Users\PetriTol\Desktop\NetworkCourseEx\MultiThreadingEx9\MultiThreadingEx9.vcxproj" (Build target(s)).
-
-Build succeeded.
-
-Time Elapsed 00:00:00.04
+﻿  Main.cpp
+j:\githubrepos\multithreading\networkcourseex\multithreadingex9\main.cpp(31): warning C4018: '<' : signed/unsigned mismatch
+j:\githubrepos\multithreading\networkcourseex\multithreadingex9\main.cpp(76): warning C4018: '<' : signed/unsigned mismatch
+j:\githubrepos\multithreading\networkcourseex\multithreadingex9\main.cpp(94): warning C4018: '<' : signed/unsigned mismatch
+  LINK : J:\GitHubRepos\MultiThreading\NetWorkCourseEx\Debug\MultiThreadingEx9.exe not found or not built by the last incremental link; performing full link
+  MultiThreadingEx9.vcxproj -> J:\GitHubRepos\MultiThreading\NetWorkCourseEx\Debug\MultiThreadingEx9.exe

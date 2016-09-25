@@ -1,0 +1,3 @@
+﻿  Main.cpp
+j:\githubrepos\multithreading\networkcourseex\clientex01\main.cpp(47): warning C4101: 'buf' : unreferenced local variable
+  ClientEx01.vcxproj -> J:\GitHubRepos\MultiThreading\NetWorkCourseEx\Debug\ClientEx01.exe

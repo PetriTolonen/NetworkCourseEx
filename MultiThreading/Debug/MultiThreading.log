@@ -1,10 +1,3 @@
-﻿Build started 12.9.2016 17.54.55.
-     1>Project "J:\GitHubRepos\MultiThreading\NetWorkCourseEx\MultiThreading\MultiThreading.vcxproj" on node 2 (Build target(s)).
-     1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(381,5): warning MSB8028: The intermediate directory (Debug\) contains files shared from another project (MultiThreading.vcxproj).  This can lead to incorrect clean and rebuild behavior.
-     1>Link:
-         MultiThreading.vcxproj -> J:\GitHubRepos\MultiThreading\NetWorkCourseEx\Debug\MultiThreadingEx7.exe
-     1>Done Building Project "J:\GitHubRepos\MultiThreading\NetWorkCourseEx\MultiThreading\MultiThreading.vcxproj" (Build target(s)).
-
-Build succeeded.
-
-Time Elapsed 00:00:00.02
+﻿C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(381,5): warning MSB8028: The intermediate directory (Debug\) contains files shared from another project (MultiThreading.vcxproj).  This can lead to incorrect clean and rebuild behavior.
+  Main.cpp
+  MultiThreading.vcxproj -> J:\GitHubRepos\MultiThreading\NetWorkCourseEx\Debug\MultiThreadingEx7.exe

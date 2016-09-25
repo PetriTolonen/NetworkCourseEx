@@ -49,7 +49,11 @@ void messageSender(SOCKET s)
 
 			std::this_thread::sleep_for(std::chrono::seconds(sendtemp.mySleep));
 
-			sendtemp.message += " " + sendtemp.sender + " " + sendtemp.timestamp;
+			time_t t = time(0);
+			struct tm * now = localtime(&t);
+			std::string sendTime = "| " + std::to_string(now->tm_hour) + ":" + std::to_string(now->tm_min) + ":" + std::to_string(now->tm_sec) + " |";
+
+			sendtemp.message += " " + sendtemp.sender + " " + sendtemp.timestamp + " " + sendTime;
 
 			int index = 0;
 			for (int i = 0; i < sendtemp.message.length(); i++)
@@ -74,18 +78,18 @@ void countDownFrom10()
 	{
 		std::this_thread::sleep_for(std::chrono::seconds(1));
 
-		if (sleepCountR > 0 && startcounting)
+		if (sleepCountR == 0)
+		{
+			sleepCountR = 10;
+			startcounting = false;
+		}
+		else if (startcounting)
 		{
 			sleepCount_mutex.lock();
 			sleepCountR--;
 			sleepCount_mutex.unlock();
 			printf("%d\n", sleepCountR);
-		}
-		else if (sleepCountR == 0)
-		{
-			sleepCountR = 10;
-			startcounting = false;
-		}
+		}		
 	}
 }
 
@@ -149,14 +153,11 @@ int main()
 		temp.sender = inet_ntoa(si_other.sin_addr);
 
 		sleepCount_mutex.lock();
-		if (sleepCountR == 0)
+		if (sleepCountR == 10)
 		{
-			temp.mySleep = 10;
+			startcounting = true;
 		}
-		else
-		{
-			temp.mySleep = 10 - (10 - sleepCountR);
-		}
+		temp.mySleep = 10 - (10 - sleepCountR);
 		sleepCount_mutex.unlock();
 
 		list_usage_mutex.lock();

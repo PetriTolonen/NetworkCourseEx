@@ -49,7 +49,7 @@ void SendThread()
 
 	while (1)
 	{
-		printf("Enter message : ");
+		printf("");
 		gets(message);
 
 		if (sendto(s, message, strlen(message) + 1, 0, (struct sockaddr *) &si_other, slen) == SOCKET_ERROR) {
