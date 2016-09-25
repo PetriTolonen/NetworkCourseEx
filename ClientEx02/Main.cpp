@@ -1,168 +1,114 @@
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 #define _CRT_SECURE_NO_WARNINGS
 
-#include <winsock2.h>
-#include <windows.h>
-#include <ws2tcpip.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <winsock2.h>
+#ifdef MINGWTHREAD
+#  include "mingw.thread.h"
+#  include "mingw.mutex.h"
+#else
+#  include <thread>
+#  include <mutex>
+#endif
+#include <list>
+#include <string>
 #pragma comment(lib,"ws2_32.lib") //Winsock Library
 
-#include <string>
-// For threads
-#include <thread>
-#include <mutex>
-#include <atomic>
+#define SERVER "127.0.0.1"  //ip address of udp server
+#define BUFLEN 512  //Max length of buffer
+#define PORT 8888   //The port on which to listen for incoming data
 
-// Need to link with Ws2_32.lib, Mswsock.lib, and Advapi32.lib
-#define DEFAULT_BUFLEN 512
-#define DEFAULT_PORT "27015"
+std::list<std::string> msgbuf;
+std::mutex msgbuf_mtx;
 
-namespace
-{
-	SOCKET ConnectSocket = INVALID_SOCKET;
-	struct addrinfo *result = NULL,
-		*ptr = NULL,
-		hints;
-	
-	int iResult;
+struct sockaddr_in si_other, si_this;
+int s, slen = sizeof(si_other);
 
-	std::atomic<bool> exiting = false;
+
+void ReceiveThread(int s) {
+	struct sockaddr_in si_other;
+	int slen = sizeof(si_other);
+	char buf[BUFLEN];
+
+	while (1) {
+		if (recvfrom(s, buf, BUFLEN, 0, (struct sockaddr *) &si_other, &slen) == SOCKET_ERROR) {
+			printf("recvfrom() failed with error code : %d", WSAGetLastError());
+			exit(EXIT_FAILURE);
+		}
+
+		msgbuf_mtx.lock();
+		msgbuf.push_back(buf);
+		msgbuf_mtx.unlock();
+	}
 }
 
-
-void sendThread()
+void SendThread()
 {
-	char message[DEFAULT_BUFLEN];
+	char buf[BUFLEN];
+	char message[BUFLEN];
 
-	printf("Name");
-	gets(message);
-
-	// Send an initial buffer
-	iResult = send(ConnectSocket, message, (int)strlen(message), 0);
-	if (iResult == SOCKET_ERROR) {
-		printf("send failed with error: %d\n", WSAGetLastError());
-		closesocket(ConnectSocket);
-		WSACleanup();
-	}
-
-	while (!exiting)
+	while (1)
 	{
 		printf("");
 		gets(message);
 
-		if (message[0] == 'e' && message[1] == 'x' && message[2] == 'i' && message[3] == 't')
-		{
-			exiting = true;
-		}
-
-		// Send an initial buffer
-		iResult = send(ConnectSocket, message, (int)strlen(message), 0);
-		if (iResult == SOCKET_ERROR) {
-			printf("send failed with error: %d\n", WSAGetLastError());
-			closesocket(ConnectSocket);
-			WSACleanup();
+		if (sendto(s, message, strlen(message) + 1, 0, (struct sockaddr *) &si_other, slen) == SOCKET_ERROR) {
+			printf("sendto() failed with error code : %d", WSAGetLastError());
+			exit(EXIT_FAILURE);
 		}
 	}	
 }
 
-void receiveThread()
-{
-	int recvbuflen = DEFAULT_BUFLEN;
-	char recvbuf[DEFAULT_BUFLEN];
-	// Receive until the peer closes the connection
-	do {
+int main(void) {
+	WSADATA wsa;
 
-		iResult = recv(ConnectSocket, recvbuf, recvbuflen, 0);
-		if (iResult > 0)
-			printf("Bytes received: %d\n", iResult);
-		else if (iResult == 0)
-			printf("Connection closed\n");
-		else
-			printf("recv failed with error: %d\n", WSAGetLastError());
+	//Initialise winsock
+	printf("\nInitialising Winsock...");
+	if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
+		printf("Failed. Error Code : %d\n", WSAGetLastError());
+		exit(EXIT_FAILURE);
+	}
+	printf("Initialised.\n");
 
-	} while (!exiting);
-}
-
-int __cdecl main(int argc, char **argv)
-{
-	WSADATA wsaData;
-
-	//// Validate the parameters
-	//if (argc != 2) {
-	//	printf("usage: %s server-name\n", argv[0]);
-	//	return 1;
-	//}
-
-	// Initialize Winsock
-	iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
-	if (iResult != 0) {
-		printf("WSAStartup failed with error: %d\n", iResult);
-		return 1;
+	//create socket
+	if ((s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == SOCKET_ERROR) {
+		printf("socket() failed with error code : %d", WSAGetLastError());
+		exit(EXIT_FAILURE);
 	}
 
-	ZeroMemory(&hints, sizeof(hints));
-	hints.ai_family = AF_UNSPEC;
-	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_protocol = IPPROTO_TCP;
+	//setup address structure
+	memset((char *)&si_other, 0, sizeof(si_other));
+	si_other.sin_family = AF_INET;
+	si_other.sin_port = htons(PORT);
+	si_other.sin_addr.S_un.S_addr = inet_addr(SERVER);
 
-	// Resolve the server address and port
-	iResult = getaddrinfo("localhost", DEFAULT_PORT, &hints, &result);
-	if (iResult != 0) {
-		printf("getaddrinfo failed with error: %d\n", iResult);
-		WSACleanup();
-		return 1;
+	//setup address structure
+	memset((char *)&si_this, 0, sizeof(si_this));
+	si_this.sin_family = AF_INET;
+	si_this.sin_port = htons(PORT + 1);
+	si_this.sin_addr.S_un.S_addr = INADDR_ANY;
+
+	//Bind socket
+	if (bind(s, (struct sockaddr *)&si_this, sizeof(si_this)) == SOCKET_ERROR) {
+		printf("Bind failed with error code : %d", WSAGetLastError());
+		exit(EXIT_FAILURE);
 	}
 
-	// Attempt to connect to an address until one succeeds
-	for (ptr = result; ptr != NULL; ptr = ptr->ai_next) {
-
-		// Create a SOCKET for connecting to server
-		ConnectSocket = socket(ptr->ai_family, ptr->ai_socktype,
-			ptr->ai_protocol);
-		if (ConnectSocket == INVALID_SOCKET) {
-			printf("socket failed with error: %ld\n", WSAGetLastError());
-			WSACleanup();
-			return 1;
+	std::thread recthr(ReceiveThread, s);
+	std::thread sendthr(SendThread);
+	//start communication
+	while (1) {
+		Sleep(100);
+		msgbuf_mtx.lock();
+		while (!msgbuf.empty()) {
+			std::string s = msgbuf.front();
+			msgbuf.pop_front();
+			printf("%s\n", s.c_str());
 		}
-
-		// Connect to server.
-		iResult = connect(ConnectSocket, ptr->ai_addr, (int)ptr->ai_addrlen);
-		if (iResult == SOCKET_ERROR) {
-			closesocket(ConnectSocket);
-			ConnectSocket = INVALID_SOCKET;
-			continue;
-		}
-		break;
+		msgbuf_mtx.unlock();
 	}
 
-	freeaddrinfo(result);
-
-	if (ConnectSocket == INVALID_SOCKET) {
-		printf("Unable to connect to server!\n");
-		WSACleanup();
-		return 1;
-	}
-
-	// Start send thread
-	std::thread* mySendThread = new std::thread(sendThread);
-	std::thread* myReceiveThread = new std::thread(receiveThread);
-
-	// Join threads
-	mySendThread->join();
-	myReceiveThread->join();
-
-	// shutdown the connection since no more data will be sent
-	iResult = shutdown(ConnectSocket, SD_SEND);
-	if (iResult == SOCKET_ERROR) {
-		printf("shutdown failed with error: %d\n", WSAGetLastError());
-		closesocket(ConnectSocket);
-		WSACleanup();
-		return 1;
-	}
-
-	// cleanup
-	closesocket(ConnectSocket);
+	closesocket(s);
 	WSACleanup();
 
 	return 0;

@@ -1,2 +1,5 @@
 ﻿  Main.cpp
+j:\githubrepos\multithreading\networkcourseex\cserverex02\main.cpp(64): warning C4018: '<' : signed/unsigned mismatch
+j:\githubrepos\multithreading\networkcourseex\cserverex02\main.cpp(70): warning C4018: '<' : signed/unsigned mismatch
+j:\githubrepos\multithreading\networkcourseex\cserverex02\main.cpp(177): warning C4018: '<' : signed/unsigned mismatch
   CServerEx02.vcxproj -> J:\GitHubRepos\MultiThreading\NetWorkCourseEx\Debug\CServerEx02.exe
