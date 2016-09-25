@@ -74,11 +74,12 @@ void messageSender(SOCKET s)
 
 void countDownFrom10()
 {
+	sleepCountR = 10;
 	while (!exiting)
 	{
 		std::this_thread::sleep_for(std::chrono::seconds(1));
 
-		if (sleepCountR == 0)
+		if (sleepCountR == 1)
 		{
 			sleepCountR = 10;
 			startcounting = false;
@@ -126,7 +127,10 @@ int main()
 
 	std::thread* myMessagerThread = new std::thread(messageSender, s);
 	std::thread* countDown10Thread = new std::thread(countDownFrom10);
-	sleepCountR = 10;
+
+	int lastSleepCount = 0;
+	int tempTimeCalc = 0;
+	
 	while (1)
 	{
 		printf("Waiting for data..."); fflush(stdout);
@@ -152,17 +156,30 @@ int main()
 		temp.timestamp = "| " + std::to_string(now->tm_hour) + ":" + std::to_string(now->tm_min) + ":" + std::to_string(now->tm_sec) + " |";
 		temp.sender = inet_ntoa(si_other.sin_addr);
 
-		sleepCount_mutex.lock();
 		if (sleepCountR == 10)
 		{
+			temp.mySleep = 10;
+			tempTimeCalc = 0;
 			startcounting = true;
 		}
-		temp.mySleep = 10 - (10 - sleepCountR);
-		sleepCount_mutex.unlock();
+		else
+		{
+			sleepCount_mutex.lock();
+			tempTimeCalc = 10 - (sleepCountR + lastSleepCount);
+			sleepCount_mutex.unlock();
+			if (tempTimeCalc < 0)
+			{
+				tempTimeCalc = 0;
+			}
+			
+			temp.mySleep = tempTimeCalc;
+		}
 
 		list_usage_mutex.lock();
 		MyList.push_front(temp);
 		list_usage_mutex.unlock();
+
+		lastSleepCount = tempTimeCalc;
 	}
 
 	myMessagerThread->join();
