@@ -6,6 +6,7 @@
 #include <ws2tcpip.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string>
 
 #pragma comment(lib,"ws2_32.lib") //Winsock Library
 
@@ -13,6 +14,21 @@
 
 #define DEFAULT_BUFLEN 512
 #define DEFAULT_PORT "27015"
+
+struct client
+{
+	std::string name;
+	SOCKET ListenSocket = INVALID_SOCKET;
+	SOCKET ClientSocket = INVALID_SOCKET;
+};
+
+struct outmessage
+{
+	std::string message;
+	std::string sender;
+	std::string timestamp;
+	int slen;
+};
 
 int __cdecl main(void)
 {

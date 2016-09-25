@@ -8,21 +8,85 @@
 #include <stdio.h>
 #pragma comment(lib,"ws2_32.lib") //Winsock Library
 
+#include <string>
+// For threads
+#include <thread>
+#include <mutex>
+#include <atomic>
+
 // Need to link with Ws2_32.lib, Mswsock.lib, and Advapi32.lib
 #define DEFAULT_BUFLEN 512
 #define DEFAULT_PORT "27015"
 
-int __cdecl main(int argc, char **argv)
+namespace
 {
-	WSADATA wsaData;
 	SOCKET ConnectSocket = INVALID_SOCKET;
 	struct addrinfo *result = NULL,
 		*ptr = NULL,
 		hints;
-	char *sendbuf = "this is a test";
-	char recvbuf[DEFAULT_BUFLEN];
+	
 	int iResult;
+
+	std::atomic<bool> exiting = false;
+}
+
+
+void sendThread()
+{
+	char message[DEFAULT_BUFLEN];
+
+	printf("Name");
+	gets(message);
+
+	// Send an initial buffer
+	iResult = send(ConnectSocket, message, (int)strlen(message), 0);
+	if (iResult == SOCKET_ERROR) {
+		printf("send failed with error: %d\n", WSAGetLastError());
+		closesocket(ConnectSocket);
+		WSACleanup();
+	}
+
+	while (!exiting)
+	{
+		printf("");
+		gets(message);
+
+		if (message[0] == 'e' && message[1] == 'x' && message[2] == 'i' && message[3] == 't')
+		{
+			exiting = true;
+		}
+
+		// Send an initial buffer
+		iResult = send(ConnectSocket, message, (int)strlen(message), 0);
+		if (iResult == SOCKET_ERROR) {
+			printf("send failed with error: %d\n", WSAGetLastError());
+			closesocket(ConnectSocket);
+			WSACleanup();
+		}
+	}	
+}
+
+void receiveThread()
+{
 	int recvbuflen = DEFAULT_BUFLEN;
+	char recvbuf[DEFAULT_BUFLEN];
+	// Receive until the peer closes the connection
+	do {
+
+		iResult = recv(ConnectSocket, recvbuf, recvbuflen, 0);
+		if (iResult > 0)
+			printf("Bytes received: %d\n", iResult);
+		else if (iResult == 0)
+			printf("Connection closed\n");
+		else
+			printf("recv failed with error: %d\n", WSAGetLastError());
+
+	} while (!exiting);
+}
+
+int __cdecl main(int argc, char **argv)
+{
+	WSADATA wsaData;
 
 	//// Validate the parameters
 	//if (argc != 2) {
@@ -80,16 +144,13 @@ int __cdecl main(int argc, char **argv)
 		return 1;
 	}
 
-	// Send an initial buffer
-	iResult = send(ConnectSocket, sendbuf, (int)strlen(sendbuf), 0);
-	if (iResult == SOCKET_ERROR) {
-		printf("send failed with error: %d\n", WSAGetLastError());
-		closesocket(ConnectSocket);
-		WSACleanup();
-		return 1;
-	}
+	// Start send thread
+	std::thread* mySendThread = new std::thread(sendThread);
+	std::thread* myReceiveThread = new std::thread(receiveThread);
 
-	printf("Bytes Sent: %ld\n", iResult);
+	// Join threads
+	mySendThread->join();
+	myReceiveThread->join();
 
 	// shutdown the connection since no more data will be sent
 	iResult = shutdown(ConnectSocket, SD_SEND);
@@ -99,19 +160,6 @@ int __cdecl main(int argc, char **argv)
 		WSACleanup();
 		return 1;
 	}
-
-	// Receive until the peer closes the connection
-	do {
-
-		iResult = recv(ConnectSocket, recvbuf, recvbuflen, 0);
-		if (iResult > 0)
-			printf("Bytes received: %d\n", iResult);
-		else if (iResult == 0)
-			printf("Connection closed\n");
-		else
-			printf("recv failed with error: %d\n", WSAGetLastError());
-
-	} while (iResult > 0);
 
 	// cleanup
 	closesocket(ConnectSocket);
