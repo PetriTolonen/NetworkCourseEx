@@ -1,3 +1,9 @@
-﻿  Main.cpp
-j:\githubrepos\multithreading\networkcourseex\cserverex01\main.cpp(61): warning C4018: '<' : signed/unsigned mismatch
-j:\githubrepos\multithreading\networkcourseex\cserverex01\main.cpp(135): error C4700: uninitialized local variable 'si_other' used
+﻿Build started 26.9.2016 12:42:54.
+     1>Project "C:\Users\PetriTol\Desktop\NetworkCourseEx\CServerEx01\CServerEx01.vcxproj" on node 3 (Build target(s)).
+     1>Link:
+         CServerEx01.vcxproj -> C:\Users\PetriTol\Desktop\NetworkCourseEx\Debug\CServerEx01.exe
+     1>Done Building Project "C:\Users\PetriTol\Desktop\NetworkCourseEx\CServerEx01\CServerEx01.vcxproj" (Build target(s)).
+
+Build succeeded.
+
+Time Elapsed 00:00:00.14

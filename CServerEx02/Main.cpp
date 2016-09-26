@@ -19,7 +19,8 @@
 
 struct client
 {
-	SOCKET s;
+	struct sockaddr_in si_other;
+	std::thread* myConnectThread;
 };
 
 struct outmessage
@@ -27,7 +28,6 @@ struct outmessage
 	std::string message;
 	std::string sender;
 	std::string timestamp;
-	struct sockaddr_in si_other;
 	int slen;
 };
 
@@ -37,6 +37,7 @@ namespace
 	std::list<outmessage> MyMessageList;
 	std::vector<client> MyClientList;
 	std::atomic<bool> exiting = false;
+	SOCKET serversocket;
 }
 
 void messageSender()
@@ -69,7 +70,7 @@ void messageSender()
 
 			for (int i = 0; i < MyClientList.size(); i++)
 			{
-				if (sendto(MyClientList[i].s, sbuf, index, 0, (struct sockaddr*) &sendtemp.si_other, sendtemp.slen) == SOCKET_ERROR)
+				if (sendto(serversocket, sbuf, index, 0, (struct sockaddr*) &MyClientList[i].si_other, sendtemp.slen) == SOCKET_ERROR)
 				{
 					printf("sendto() failed with error code : %d", WSAGetLastError());
 					exit(EXIT_FAILURE);
@@ -77,14 +78,14 @@ void messageSender()
 			}			
 		}
 	}
-
 }
+	
 
-void connectThread()
+int main()
 {
 	struct sockaddr_in server, si_other;
 	WSADATA wsa;
-	SOCKET s;
+	
 	int slen;
 
 	char buf[BUFLEN];
@@ -98,7 +99,7 @@ void connectThread()
 		exit(EXIT_FAILURE);
 	}
 
-	if ((s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == INVALID_SOCKET)
+	if ((serversocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == INVALID_SOCKET)
 	{
 		printf("Could not create socket : %d", WSAGetLastError());
 	}
@@ -107,14 +108,16 @@ void connectThread()
 	server.sin_addr.s_addr = INADDR_ANY;
 	server.sin_port = htons(PORT);
 
-	if (bind(s, (struct sockaddr *)&server, sizeof(server)) == SOCKET_ERROR)
+	if (bind(serversocket, (struct sockaddr *)&server, sizeof(server)) == SOCKET_ERROR)
 	{
 		printf("Bind failed with error code : %d", WSAGetLastError());
 		exit(EXIT_FAILURE);
-	}	
-	client tempc;
-	tempc.s = s;
-	MyClientList.push_back(tempc);
+	}
+
+	// Start sending messages to all
+	std::thread* myMessagerThread = new std::thread(messageSender);
+
+	bool found = false;
 	outmessage temp;
 	while (!exiting)
 	{
@@ -122,10 +125,29 @@ void connectThread()
 		printf("Waiting for data..."); fflush(stdout);
 
 		memset(buf, '\0', BUFLEN);
-		if ((recv_len = recvfrom(s, buf, BUFLEN, 0, (struct sockaddr *) &si_other, &slen)) == SOCKET_ERROR)
+		if ((recv_len = recvfrom(serversocket, buf, BUFLEN, 0, (struct sockaddr *) &si_other, &slen)) == SOCKET_ERROR)
 		{
 			printf("recvfrom() failed with error code : %d", WSAGetLastError());
 			exit(EXIT_FAILURE);
+		}
+
+		for (auto ListClient : MyClientList)
+		{
+			if (inet_ntoa(ListClient.si_other.sin_addr) == inet_ntoa(si_other.sin_addr))
+			{
+				if (ntohs(ListClient.si_other.sin_port) == ntohs(si_other.sin_port))
+				{
+					found = true;
+					break;
+				}
+			}
+		}
+
+		if (!found)
+		{
+			client tempc;
+			tempc.si_other = si_other;
+			MyClientList.push_back(tempc);
 		}
 
 		// Get current time
@@ -145,7 +167,6 @@ void connectThread()
 		temp.message.resize(recv_len);
 		memcpy(&temp.message[0], &buf[0], recv_len);
 		temp.message.pop_back();
-		temp.si_other = si_other;
 		temp.slen = slen;
 
 		// Save timestamp
@@ -156,28 +177,11 @@ void connectThread()
 		MyMessageList.push_front(temp);
 		list_usage_mutex.unlock();
 	}
-}
-
-int main()
-{
-	// Connecting people
-	std::thread* myConnectThread = new std::thread(connectThread);
-
-	// Start sending messages to all
-	std::thread* myMessagerThread = new std::thread(messageSender);
-
-	while (!exiting)
-	{
-		Sleep(100);
-	}
 
 	myMessagerThread->join();
-	myConnectThread->join();
 
-	for (int i = 0; i < MyClientList.size(); i++)
-	{
-		closesocket(MyClientList[i].s);
-	}
+	closesocket(serversocket);
+
 	WSACleanup();
 
 	return 0;

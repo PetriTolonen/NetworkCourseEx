@@ -12,6 +12,7 @@
 #endif
 #include <list>
 #include <string>
+#include <random>
 #pragma comment(lib,"ws2_32.lib") //Winsock Library
 
 #define SERVER "127.0.0.1"  //ip address of udp server
@@ -85,9 +86,13 @@ int main(void) {
 	//setup address structure
 	memset((char *)&si_this, 0, sizeof(si_this));
 	si_this.sin_family = AF_INET;
-	si_this.sin_port = htons(PORT + 1);
+	
+	srand(time(NULL));
+	int randomInt = rand() % 1000;
+	si_this.sin_port = htons(PORT + randomInt + 1);
 	si_this.sin_addr.S_un.S_addr = INADDR_ANY;
 
+	printf("%d\n", randomInt);
 	//Bind socket
 	if (bind(s, (struct sockaddr *)&si_this, sizeof(si_this)) == SOCKET_ERROR) {
 		printf("Bind failed with error code : %d", WSAGetLastError());
