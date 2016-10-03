@@ -21,6 +21,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ClientEx02", "ClientEx02\Cl
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CTicTacToeServer", "CTicTacToeServer\CTicTacToeServer.vcxproj", "{6F3309D1-CC63-47C8-A7E8-53B29CAFE0B9}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SQLiteC++TestProgram", "SQLiteC++TestProgram\SQLiteC++TestProgram.vcxproj", "{51D73374-61B2-45D8-ADF1-55D636273AF6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -63,6 +65,10 @@ Global
 		{6F3309D1-CC63-47C8-A7E8-53B29CAFE0B9}.Debug|Win32.Build.0 = Debug|Win32
 		{6F3309D1-CC63-47C8-A7E8-53B29CAFE0B9}.Release|Win32.ActiveCfg = Release|Win32
 		{6F3309D1-CC63-47C8-A7E8-53B29CAFE0B9}.Release|Win32.Build.0 = Release|Win32
+		{51D73374-61B2-45D8-ADF1-55D636273AF6}.Debug|Win32.ActiveCfg = Debug|Win32
+		{51D73374-61B2-45D8-ADF1-55D636273AF6}.Debug|Win32.Build.0 = Debug|Win32
+		{51D73374-61B2-45D8-ADF1-55D636273AF6}.Release|Win32.ActiveCfg = Release|Win32
+		{51D73374-61B2-45D8-ADF1-55D636273AF6}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
